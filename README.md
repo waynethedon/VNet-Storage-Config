@@ -38,6 +38,9 @@ az deployment group create --what-if caught an unintended property change before
 
 
 Verification
+
+
+
 Public access disabled: the storage account rejects direct public network requests; it's only reachable through the private endpoint from inside the VNet
 Private DNS resolution: from inside the VM, nslookup stvmrbacproject01.blob.core.windows.net resolves to 172.16.1.4 — the private endpoint's IP — rather than a public address
 Outbound internet blocked: from inside the VM, curl https://www.google.com times out, confirming the NSG's outbound Deny rule is active
