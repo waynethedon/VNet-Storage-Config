@@ -3,14 +3,15 @@ VNet & Storage Config
 This project demonstrates hands-on Azure networking and storage security configuration: extending an existing virtual network with a dedicated subnet, deploying a storage account with public access fully disabled, and connecting it privately via a private endpoint with full DNS integration. The environment is defined as reusable Infrastructure-as-Code using Bicep, and builds directly on the VM/RBAC environment from Project 1.
 
 
-Architecture
+## Architecture
 
-Virtual Network (extended from Project 1): vnet-vmrbac-project, now with a second subnet — subnet-private-endpoints (172.16.1.0/24) — dedicated to private endpoint traffic, kept separate from the VM's resource subnet per Azure's networking guidance for private endpoints
-Network Security Group (extended from Project 1): nsg-vmrbac-project now includes explicit inbound and outbound Deny rules restricting the VM's subnet to VNet-only traffic — no unsolicited inbound from within the VNet, no outbound internet access at all
-Storage Account: stvmrbacproject01, created with public network access fully disabled
-Private Endpoint: pe-storage-vmrbac, connecting the storage account's blob service into subnet-private-endpoints
-Private DNS Zone: privatelink.blob.core.windows.net, linked to the VNet and connected to the private endpoint via a DNS zone group — this is what makes the storage account's normal hostname resolve to its private IP (172.16.1.4) from inside the VNet, instead of a public address
-Infrastructure as Code: the full second-subnet, storage account, NSG rules, private endpoint, and DNS chain are defined in storage-network.bicep, which references the existing VNet from Project 1 rather than redeclaring it
+- **Virtual Network** (extended from Project 1): `vnet-vmrbac-project`, now with a second subnet — `subnet-private-endpoints` (`172.16.1.0/24`) — dedicated to private endpoint traffic, kept separate from the VM's resource subnet per Azure's networking guidance for private endpoints
+- **Network Security Group** (extended from Project 1): `nsg-vmrbac-project` now includes explicit inbound and outbound Deny rules restricting the VM's subnet to VNet-only traffic — no unsolicited inbound from within the VNet, no outbound internet access at all
+- **Storage Account**: `stvmrbacproject01`, created with public network access fully disabled
+- **Private Endpoint**: `pe-storage-vmrbac`, connecting the storage account's blob service into `subnet-private-endpoints`
+- **Private DNS Zone**: `privatelink.blob.core.windows.net`, linked to the VNet and connected to the private endpoint via a DNS zone group — this is what makes the storage account's normal hostname resolve to its private IP (`172.16.1.4`) from inside the VNet, instead of a public address
+- **Infrastructure as Code**: the full second-subnet, storage account, NSG rules, private endpoint, and DNS chain are defined in `storage-network.bicep`, which references the existing VNet from Project 1 rather than redeclaring it
+
 
 
 <img width="612" height="432" alt="Screenshot 2026-09-17 at 12 26 17 PM" src="https://github.com/user-attachments/assets/65fd7cdd-25fb-4f60-a733-8461372f9887" />
@@ -45,11 +46,41 @@ Bicep template accuracy: az deployment group create --what-if against the live e
 
 
 <img width="863" height="613" alt="Private DNS res" src="https://github.com/user-attachments/assets/b2ef8a6d-2fec-4b92-9e48-25a18cc0e1ed" />
+
+
+
 Private DNS Resolution 
+
 
 
 <img width="558" height="71" alt="outbound internet " src="https://github.com/user-attachments/assets/bb03a3cf-7475-4885-8479-79576625c811" />
 
+
+
+
 Outbound internet Blocked 
+
+How to deploy
+
+git clone https://github.com/waynethedon/VNet-Storage-Config.git
+cd VNet-Storage-Config
+az login
+az deployment group create \
+  --resource-group <your-resource-group> \
+  --template-file storage-network.bicep
+
+  To connect to the VM and verify private connectivity:
+
+  ssh -i <path-to-your-key> azureuser@<vm-public-ip>
+nslookup <your-storage-account>.blob.core.windows.net
+
+
+Next steps
+
+
+
+Compare this hand-written template against an Azure Verified Module (AVM) equivalent for the storage account, once several projects are complete and there's more to compare across
+Project 3 will add monitoring and backup for both this environment and Project 1's VM
+Consider whether the outbound-internet-blocked posture should be relaxed (e.g., allow only Azure package repositories) if this VM needs OS patching in the future — currently it cannot reach apt update servers at all
 
 
